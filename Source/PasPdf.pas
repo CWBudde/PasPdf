@@ -29,9 +29,23 @@ type
     constructor Create(Start: Integer);
   end;
 
-  TPdfObject = class
+  TPdfCustomObject = class
   public
-    constructor Create;
+    constructor Create; virtual;
+  end;
+
+  TPdfObjectNumber = class(TPdfCustomObject)
+  private
+    FValue: Integer;
+  public
+    property Value: Integer read FValue;
+  end;
+
+  TPdfObjectString = class(TPdfCustomObject)
+  private
+    FValue: string;
+  public
+    property Value: string read FValue;
   end;
 
   TPdfObjectList = class
@@ -138,11 +152,11 @@ begin
 end;
 
 
-{ TPdfObject }
+{ TPdfCustomObject }
 
-constructor TPdfObject.Create;
+constructor TPdfCustomObject.Create;
 begin
-
+  // nothing here yet
 end;
 
 
@@ -387,10 +401,20 @@ begin
       ReadLiteralString;
     '[':
       ReadArrayObject;
+    '0'..'9':
+      ReadNumber;
+    else
+      raise Exception.Create(RStrNotImplemented);
   end;
 
   ReadCurrentChar;
   SkipWhiteSpaces;
+
+  if CheckString('stream') then
+  begin
+    SkipUntil('endstream');
+    ReadCurrentChar;
+  end;
 
   if not CheckString('endobj') then
     raise Exception.Create(RStrInvalidFile);
@@ -402,6 +426,10 @@ var
   CharNumber: Integer;
 begin
   Result := '';
+
+  Assert(FCurrentChar = '/');
+  ReadCurrentChar;
+
   repeat
     if FCurrentChar = '#' then
     begin
@@ -410,7 +438,7 @@ begin
       FCurrentChar := AnsiChar(CharNumber);
     end;
 
-    if not (FCurrentChar in CWhitespaces) then
+    if not ((FCurrentChar in CWhitespaces) or (FCurrentChar in ['/', '>'])) then
       Result := Result + FCurrentChar
     else
       Break;
@@ -470,19 +498,16 @@ begin
             if FCurrentChar <> 'R' then
               raise Exception.CreateFmt(RStrInvalidCharacter, [FCurrentChar]);
             ReadCurrentChar;
-            SkipWhiteSpaces;
           end;
         end;
       '/':
         begin
           ValueText := ReadNamedObject;
-          SkipWhiteSpaces;
         end;
       '[':
         begin
           ReadArrayObject;
           ReadCurrentChar;
-          SkipWhiteSpaces;
         end;
       '<':
         begin
@@ -493,7 +518,6 @@ begin
 
             // workaround
             ReadCurrentChar;
-            SkipWhiteSpaces;
           end
           else
             ReadHexadecimalString;
@@ -607,7 +631,7 @@ begin
     FStream.Seek(-1, soFromCurrent);
   end;
 
-  if not (FileVersion[2] in ['0', '1', '2', '3', #$A, #$D]) then
+  if not (FileVersion[2] in ['0' .. '5', #$A, #$D]) then
     raise Exception.Create(RStrUnsupportedVersion);
 
   FPdfFile.FMinorVersion := StrToInt(string(FileVersion[2]));
@@ -737,7 +761,7 @@ begin
 
     Stream.Seek(-8, soFromCurrent);
     Result := (FileHeader = '%PDF-') and (FileVersion[0] = '1') and
-      (FileVersion[1] = '.') and (FileVersion[2] in ['0', '1', '2', '3']);
+      (FileVersion[1] = '.') and (FileVersion[2] in ['0' .. '5']);
     Stream.Seek(-8, soFromCurrent);
   end;
 end;

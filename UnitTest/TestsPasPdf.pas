@@ -15,7 +15,8 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
-    procedure TestLoadFromFile;
+    procedure TestLoadSimpleFile;
+    procedure TestLoadLibreOffice;
     procedure TestCanLoad;
   end;
 
@@ -32,9 +33,14 @@ begin
   FPdfFile := nil;
 end;
 
-procedure TestTPdfFile.TestLoadFromFile;
+procedure TestTPdfFile.TestLoadSimpleFile;
 begin
   FPdfFile.LoadFromFile('Simple.pdf');
+end;
+
+procedure TestTPdfFile.TestLoadLibreOffice;
+begin
+  FPdfFile.LoadFromFile('LibreOffice.pdf');
 end;
 
 procedure TestTPdfFile.TestCanLoad;
