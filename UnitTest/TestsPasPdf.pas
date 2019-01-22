@@ -17,6 +17,8 @@ type
   published
     procedure TestLoadSimpleFile;
     procedure TestLoadLibreOffice;
+    procedure TestLoadPDFA;
+    procedure TestLoadTextString;
     procedure TestCanLoad;
   end;
 
@@ -43,9 +45,22 @@ begin
   FPdfFile.LoadFromFile('LibreOffice.pdf');
 end;
 
+procedure TestTPdfFile.TestLoadPDFA;
+begin
+  FPdfFile.LoadFromFile('PDFA.pdf');
+end;
+
+procedure TestTPdfFile.TestLoadTextString;
+begin
+  FPdfFile.LoadFromFile('TextString.pdf');
+end;
+
 procedure TestTPdfFile.TestCanLoad;
 begin
   CheckTrue(FPdfFile.CanLoad('Simple.pdf'));
+  CheckTrue(FPdfFile.CanLoad('LibreOffice.pdf'));
+  CheckTrue(FPdfFile.CanLoad('PDFA.pdf'));
+  CheckTrue(FPdfFile.CanLoad('TextString.pdf'));
 end;
 
 initialization

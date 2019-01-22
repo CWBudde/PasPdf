@@ -3,14 +3,12 @@ unit PasPdf;
 interface
 
 uses
-  Classes, SysUtils, Contnrs;
+  Classes, SysUtils, Contnrs, PasPdfFileElements;
 
 type
   TPdfFile = class;
-  TPdfArray = class;
-  TPdfDictionary = class;
 
-  TPdfCrossReferenceEntry = class
+  TPdfFileCrossReferenceEntry = class
   private
     FByteOffset: Integer;
     FGenerationNumber: Integer;
@@ -23,185 +21,12 @@ type
     property GenerationNumber: Integer read FGenerationNumber;
   end;
 
-  TPdfCrossReferenceTable = class
+  TPdfFileCrossReferenceTable = class
   private
     FStart: Integer;
-    FCrossReferences: array of TPdfCrossReferenceEntry;
+    FCrossReferences: array of TPdfFileCrossReferenceEntry;
   public
     constructor Create(Start: Integer);
-  end;
-
-  TPdfDictionaryCustomItem = class
-  private
-    FKey: AnsiString;
-  public
-    constructor Create(Key: AnsiString); virtual;
-
-    property Key: AnsiString read FKey;
-  end;
-
-  TPdfDictionaryItemString = class(TPdfDictionaryCustomItem)
-  private
-    FValue: AnsiString;
-  public
-    constructor Create(Key, Value: AnsiString); reintroduce;
-
-    property Value: AnsiString read FValue;
-  end;
-
-  TPdfDictionaryItemInteger = class(TPdfDictionaryCustomItem)
-  private
-    FValue: Integer;
-  public
-    constructor Create(Key: AnsiString; Value: Integer); reintroduce;
-
-    property Value: Integer read FValue;
-  end;
-
-  TPdfDictionaryItemReal = class(TPdfDictionaryCustomItem)
-  private
-    FValue: Double;
-  public
-    constructor Create(Key: AnsiString; Value: Double); reintroduce;
-
-    property Value: Double read FValue;
-  end;
-
-  TPdfDictionaryItemBoolean = class(TPdfDictionaryCustomItem)
-  private
-    FValue: Boolean;
-  public
-    constructor Create(Key: AnsiString; Value: Boolean); reintroduce;
-
-    property Value: Boolean read FValue;
-  end;
-
-  TPdfDictionaryItemReference = class(TPdfDictionaryCustomItem)
-  private
-    FObjectNumber: Integer;
-    FGenerationNumber: Integer;
-  public
-    constructor Create(Key: AnsiString; ObjectNumber, GenerationNumber: Integer); reintroduce;
-
-    property ObjectNumber: Integer read FObjectNumber;
-    property GenerationNumber: Integer read FGenerationNumber;
-  end;
-
-  TPdfDictionaryItemDictionary = class(TPdfDictionaryCustomItem)
-  private
-    FValue: TPdfDictionary;
-  public
-    constructor Create(Key: AnsiString; Value: TPdfDictionary); reintroduce;
-    destructor Destroy; override;
-
-    property Value: TPdfDictionary read FValue;
-  end;
-
-  TPdfDictionaryItemArray = class(TPdfDictionaryCustomItem)
-  private
-    FValue: TPdfArray;
-  public
-    constructor Create(Key: AnsiString; Value: TPdfArray); reintroduce;
-    destructor Destroy; override;
-
-    property Value: TPdfArray read FValue;
-  end;
-
-  TPdfDictionary = class
-  private
-    FList: TObjectList;
-  public
-    constructor Create; virtual;
-    destructor Destroy; override;
-
-    procedure Add(Key, Value: AnsiString); overload;
-    procedure Add(Key: AnsiString; Value: Integer); overload;
-    procedure Add(Key: AnsiString; Value: Double); overload;
-    procedure Add(Key: AnsiString; Value: Boolean); overload;
-    procedure Add(Key: AnsiString; Value: TPdfDictionary); overload;
-    procedure Add(Key: AnsiString; Value: TPdfArray); overload;
-  end;
-
-  TPdfArray = class
-  public
-    procedure Add(Value: AnsiString); overload;
-    procedure Add(Value: Integer); overload;
-    procedure Add(Value: Double); overload;
-    procedure AddNull;
-  end;
-
-  TPdfCustomObject = class
-  private
-    FObjectNumber: Integer;
-    FGenerationNumber: Integer;
-  public
-    constructor Create(ObjectNumber, GenerationNumber: Integer); overload; virtual;
-
-    property ObjectNumber: Integer read FObjectNumber;
-    property GenerationNumber: Integer read FGenerationNumber;
-  end;
-
-  TPdfObjectNumber = class(TPdfCustomObject)
-  private
-    FValue: Double;
-  public
-    constructor Create(ObjectNumber, GenerationNumber:Integer; Value: Double); overload;
-
-    property Value: Double read FValue;
-  end;
-
-  TPdfObjectString = class(TPdfCustomObject)
-  private
-    FValue: AnsiString;
-  public
-    constructor Create(ObjectNumber, GenerationNumber: Integer; Value: AnsiString); overload;
-
-    property Value: AnsiString read FValue;
-  end;
-
-  TPdfObjectStream = class(TPdfCustomObject)
-  private
-    FDictionary: TPdfDictionary;
-    FStream: TMemoryStream;
-  public
-    constructor Create(ObjectNumber, GenerationNumber: Integer;
-      Dictionary: TPdfDictionary; Stream: TMemoryStream); reintroduce;
-
-    property Stream: TMemoryStream read FStream;
-  end;
-
-  TPdfObjectDictionary = class(TPdfCustomObject)
-  private
-    FDictionary: TPdfDictionary;
-  public
-    constructor Create(ObjectNumber, GenerationNumber: Integer; Dictionary: TPdfDictionary); overload;
-    destructor Destroy; override;
-
-    property Dictionary: TPdfDictionary read FDictionary;
-  end;
-
-  TPdfObjectArray = class(TPdfCustomObject)
-  private
-    FArray: TPdfArray;
-  public
-    constructor Create(ObjectNumber, GenerationNumber: Integer; &Array: TPdfArray); overload;
-    destructor Destroy; override;
-
-    property &Array: TPdfArray read FArray;
-  end;
-
-  TPdfObjectList = class
-  private
-    FList: TObjectList;
-    function GetItem(Index: Integer): TPdfCustomObject;
-    function GetCount: Integer;
-  public
-    constructor Create;
-
-    procedure AddObject(PdfObject: TPdfCustomObject);
-
-    property Items[Index: Integer]: TPdfCustomObject read GetItem;
-    property Count: Integer read GetCount;
   end;
 
   TPdfFileReader = class
@@ -210,8 +35,8 @@ type
     FOwnsStream: Boolean;
     FPdfFile: TPdfFile;
     FCurrentChar: AnsiChar;
-    FCrossReferenceTable: TPdfCrossReferenceTable;
-    FObjects: TPdfObjectList;
+    FCrossReferenceTable: TPdfFileCrossReferenceTable;
+    FObjects: TPdfFileObjectList;
     FStartCrossReferenceOffset: Integer;
     function ReadChar(const Character: AnsiChar): Boolean;
     function ReadReal: Double;
@@ -219,11 +44,9 @@ type
     function ReadHexNumber: Integer;
     procedure ReadNumber(out IntValue: Integer; out RealValue: Double;
       out IsIntValue: Boolean);
-    function ReadString: AnsiString;
 
     procedure SkipSingleSpace;
     procedure SkipWhiteSpaces;
-    function SkipUntil(const Text: AnsiString): Boolean;
 
     function CheckString(const Text: AnsiString): Boolean;
     procedure ReadCurrentChar; inline;
@@ -236,10 +59,10 @@ type
     procedure ReadComment;
     procedure HandleLineBreak;
     function ReadLiteralString: AnsiString;
-    function ReadHexadecimalString: AnsiString;
-    function ReadDictionaryObject: TPdfDictionary;
+    function ReadHexadecimalString: string;
+    function ReadDictionaryObject: TPdfFileDictionary;
     function ReadNamedObject: AnsiString;
-    function ReadArray: TPdfArray;
+    function ReadArray: TPdfFileArray;
     function ReadStream: TMemoryStream;
   public
     constructor Create(Stream: TStream; PdfFile: TPdfFile);
@@ -287,9 +110,9 @@ const
   CHexNumbers = ['0' .. '9', 'A'..'F', 'a'..'f'];
   CWhitespaces = [#0, ' ', #9, #10, #12, #13];
 
-{ TPdfCrossReferenceEntry }
+{ TPdfFileCrossReferenceEntry }
 
-constructor TPdfCrossReferenceEntry.Create(ByteOffset, GenerationNumber: Integer;
+constructor TPdfFileCrossReferenceEntry.Create(ByteOffset, GenerationNumber: Integer;
   InUse: Boolean);
 begin
   FByteOffset := ByteOffset;
@@ -298,282 +121,11 @@ begin
 end;
 
 
-{ TPdfCrossReferenceTable }
+{ TPdfFileCrossReferenceTable }
 
-constructor TPdfCrossReferenceTable.Create(Start: Integer);
+constructor TPdfFileCrossReferenceTable.Create(Start: Integer);
 begin
   FStart := Start;
-end;
-
-
-{ TPdfDictionaryCustomItem }
-
-constructor TPdfDictionaryCustomItem.Create(Key: AnsiString);
-begin
-  inherited Create;
-
-  FKey := Key;
-end;
-
-
-{ TPdfDictionaryItemString }
-
-constructor TPdfDictionaryItemString.Create(Key, Value: AnsiString);
-begin
-  inherited Create(Key);
-
-  FValue := Value;
-end;
-
-
-{ TPdfDictionaryItemInteger }
-
-constructor TPdfDictionaryItemInteger.Create(Key: AnsiString; Value: Integer);
-begin
-  inherited Create(Key);
-
-  FValue := Value;
-end;
-
-
-{ TPdfDictionaryItemReal }
-
-constructor TPdfDictionaryItemReal.Create(Key: AnsiString; Value: Double);
-begin
-  inherited Create(Key);
-
-  FValue := Value;
-end;
-
-
-{ TPdfDictionaryItemBoolean }
-
-constructor TPdfDictionaryItemBoolean.Create(Key: AnsiString; Value: Boolean);
-begin
-  inherited Create(Key);
-
-  FValue := Value;
-end;
-
-
-{ TPdfDictionaryItemReference }
-
-constructor TPdfDictionaryItemReference.Create(Key: AnsiString; ObjectNumber,
-  GenerationNumber: Integer);
-begin
-  inherited Create(Key);
-
-  FObjectNumber := ObjectNumber;
-  FGenerationNumber := GenerationNumber;
-end;
-
-
-{ TPdfDictionaryItemDictionary }
-
-constructor TPdfDictionaryItemDictionary.Create(Key: AnsiString;
-  Value: TPdfDictionary);
-begin
-  inherited Create(Key);
-
-  FValue := Value;
-end;
-
-destructor TPdfDictionaryItemDictionary.Destroy;
-begin
-  FValue.Free;
-
-  inherited;
-end;
-
-
-{ TPdfDictionaryItemArray }
-
-constructor TPdfDictionaryItemArray.Create(Key: AnsiString;
-  Value: TPdfArray);
-begin
-  inherited Create(Key);
-
-  FValue := Value;
-end;
-
-destructor TPdfDictionaryItemArray.Destroy;
-begin
-
-  inherited;
-end;
-
-
-{ TPdfDictionary }
-
-constructor TPdfDictionary.Create;
-begin
-  inherited;
-
-  FList := TObjectList.Create;
-end;
-
-destructor TPdfDictionary.Destroy;
-begin
-  FList.Free;
-
-  inherited;
-end;
-
-procedure TPdfDictionary.Add(Key, Value: AnsiString);
-begin
-  FList.Add(TPdfDictionaryItemString.Create(Key, Value));
-end;
-
-procedure TPdfDictionary.Add(Key: AnsiString; Value: TPdfDictionary);
-begin
-  FList.Add(TPdfDictionaryItemDictionary.Create(Key, Value));
-end;
-
-procedure TPdfDictionary.Add(Key: AnsiString; Value: Integer);
-begin
-  FList.Add(TPdfDictionaryItemInteger.Create(Key, Value));
-end;
-
-procedure TPdfDictionary.Add(Key: AnsiString; Value: Double);
-begin
-  FList.Add(TPdfDictionaryItemReal.Create(Key, Value));
-end;
-
-procedure TPdfDictionary.Add(Key: AnsiString; Value: Boolean);
-begin
-  FList.Add(TPdfDictionaryItemBoolean.Create(Key, Value));
-end;
-
-procedure TPdfDictionary.Add(Key: AnsiString; Value: TPdfArray);
-begin
-  FList.Add(TPdfDictionaryItemArray.Create(Key, Value));
-end;
-
-
-{ TPdfArray }
-
-procedure TPdfArray.Add(Value: AnsiString);
-begin
-
-end;
-
-procedure TPdfArray.Add(Value: Integer);
-begin
-
-end;
-
-procedure TPdfArray.Add(Value: Double);
-begin
-
-end;
-
-procedure TPdfArray.AddNull;
-begin
-
-end;
-
-
-{ TPdfCustomObject }
-
-constructor TPdfCustomObject.Create(ObjectNumber, GenerationNumber: Integer);
-begin
-  inherited Create;
-
-  FObjectNumber := ObjectNumber;
-  FGenerationNumber := GenerationNumber;
-end;
-
-
-{ TPdfObjectNumber }
-
-constructor TPdfObjectNumber.Create(ObjectNumber, GenerationNumber: Integer;
-  Value: Double);
-begin
-  inherited Create(ObjectNumber, GenerationNumber);
-
-  FValue := Value;
-end;
-
-
-{ TPdfObjectString }
-
-constructor TPdfObjectString.Create(ObjectNumber, GenerationNumber: Integer;
-  Value: AnsiString);
-begin
-  inherited Create(ObjectNumber, GenerationNumber);
-
-  FValue := Value;
-end;
-
-
-{ TPdfObjectStream }
-
-constructor TPdfObjectStream.Create(ObjectNumber, GenerationNumber: Integer;
-  Dictionary: TPdfDictionary; Stream: TMemoryStream);
-begin
-  inherited Create(ObjectNumber, GenerationNumber);
-
-  FDictionary := Dictionary;
-  FStream := Stream;
-end;
-
-
-{ TPdfObjectDictionary }
-
-constructor TPdfObjectDictionary.Create(ObjectNumber,
-  GenerationNumber: Integer; Dictionary: TPdfDictionary);
-begin
-  inherited Create(ObjectNumber, GenerationNumber);
-
-  FDictionary := Dictionary;
-end;
-
-destructor TPdfObjectDictionary.Destroy;
-begin
-  FDictionary.Free;
-
-  inherited;
-end;
-
-
-{ TPdfObjectArray }
-
-constructor TPdfObjectArray.Create(ObjectNumber, GenerationNumber: Integer;
-  &Array: TPdfArray);
-begin
-  inherited Create(ObjectNumber, GenerationNumber);
-
-  FArray := &Array;
-end;
-
-destructor TPdfObjectArray.Destroy;
-begin
-  FArray.Free;
-
-  inherited;
-end;
-
-
-{ TPdfObjectList }
-
-procedure TPdfObjectList.AddObject(PdfObject: TPdfCustomObject);
-begin
-  FList.Add(PdfObject);
-end;
-
-constructor TPdfObjectList.Create;
-begin
-  FList := TObjectList.Create;
-end;
-
-function TPdfObjectList.GetCount: Integer;
-begin
-  Result := FList.Count;
-end;
-
-function TPdfObjectList.GetItem(Index: Integer): TPdfCustomObject;
-begin
-  Result := TPdfCustomObject(FList.Items[Index]);
 end;
 
 
@@ -592,7 +144,7 @@ begin
 
   FPdfFile := PdfFile;
 
-  FObjects := TPdfObjectList.Create;
+  FObjects := TPdfFileObjectList.Create;
 end;
 
 destructor TPdfFileReader.Destroy;
@@ -668,35 +220,6 @@ begin
   ReadCurrentChar;
 end;
 
-function TPdfFileReader.SkipUntil(const Text: AnsiString): Boolean;
-var
-  RemainingBytes: Cardinal;
-  CompareText: AnsiString;
-begin
-  Result := False;
-  SetLength(CompareText, Length(Text));
-  while FStream.Position < FStream.Size do
-  begin
-    if FCurrentChar = Text[1] then
-    begin
-      RemainingBytes := Length(Text) - 1;
-      Result := FStream.Size >= RemainingBytes;
-      CompareText[1] := FCurrentChar;
-      if Result then
-      begin
-        FStream.Read(CompareText[2], RemainingBytes);
-        Result := Text = CompareText;
-        if Result then
-          ReadCurrentChar
-        else
-          FStream.Position := FStream.Position - RemainingBytes;
-      end;
-      Exit;
-    end;
-    ReadCurrentChar;
-  end;
-end;
-
 function TPdfFileReader.ReadInteger: Integer;
 var
   Number: AnsiString;
@@ -737,19 +260,6 @@ begin
   Result := StrToInt('$' + string(Number));
 end;
 
-function TPdfFileReader.ReadString: AnsiString;
-begin
-  Result := '';
-  repeat
-    if not (FCurrentChar in CWhitespaces) then
-      Result := Result + FCurrentChar
-    else
-      Break;
-
-    ReadCurrentChar;
-  until (FStream.Position >= FStream.Size);
-end;
-
 procedure TPdfFileReader.HandleLineBreak;
 begin
   if FCurrentChar = #$D then
@@ -787,7 +297,7 @@ end;
 procedure TPdfFileReader.ReadObject;
 var
   ObjectNumber, GenerationNumber: Integer;
-  Dictionary: TPdfDictionary;
+  Dictionary: TPdfFileDictionary;
 begin
   ObjectNumber := ReadInteger;
   SkipWhiteSpaces;
@@ -817,18 +327,18 @@ begin
               raise Exception.Create('Line feed expected');
             ReadCurrentChar;
 
-            FObjects.AddObject(TPdfObjectStream.Create(ObjectNumber,
+            FObjects.AddObject(TPdfFileObjectStream.Create(ObjectNumber,
               GenerationNumber, Dictionary, ReadStream));
 
             ReadCurrentChar;
           end
           else
-            FObjects.AddObject(TPdfObjectDictionary.Create(ObjectNumber,
+            FObjects.AddObject(TPdfFileObjectDictionary.Create(ObjectNumber,
               GenerationNumber, Dictionary));
         end
         else
         begin
-          FObjects.AddObject(TPdfObjectString.Create(ObjectNumber,
+          FObjects.AddObject(TPdfFileObjectString.Create(ObjectNumber,
             GenerationNumber, ReadHexadecimalString));
 
           ReadCurrentChar;
@@ -836,19 +346,19 @@ begin
       end;
     '(':
       begin
-        FObjects.AddObject(TPdfObjectString.Create(ObjectNumber,
-          GenerationNumber, ReadLiteralString));
+        FObjects.AddObject(TPdfFileObjectString.Create(ObjectNumber,
+          GenerationNumber, string(ReadLiteralString)));
         ReadCurrentChar;
       end;
     '[':
       begin
-        FObjects.AddObject(TPdfObjectArray.Create(ObjectNumber,
+        FObjects.AddObject(TPdfFileObjectArray.Create(ObjectNumber,
           GenerationNumber, ReadArray));
         ReadCurrentChar;
       end;
     '0'..'9':
       begin
-        FObjects.AddObject(TPdfObjectNumber.Create(ObjectNumber,
+        FObjects.AddObject(TPdfFileObjectNumber.Create(ObjectNumber,
           GenerationNumber, ReadReal));
 
         ReadCurrentChar;
@@ -879,11 +389,13 @@ begin
       begin
         FStream.Read(CompareText[2], 8);
         if 'endstream' = CompareText then
-          ReadCurrentChar
+        begin
+          ReadCurrentChar;
+          Exit;
+        end
         else
           FStream.Position := FStream.Position - 8;
       end;
-      Exit;
     end;
 
     Result.Write(FCurrentChar, 1);
@@ -935,7 +447,7 @@ begin
       if not IsIntValue then
         raise Exception.Create('Invalid float value');
       IsIntValue := False;
-      Number := Number + FormatSettings.DecimalSeparator;
+      Number := Number + AnsiString(FormatSettings.DecimalSeparator);
     end
     else
     if FCurrentChar in CNumbers then
@@ -959,13 +471,13 @@ begin
   end;
 end;
 
-function TPdfFileReader.ReadArray: TPdfArray;
+function TPdfFileReader.ReadArray: TPdfFileArray;
 var
   IntValue: Integer;
   RealValue: Double;
   IsIntValue: Boolean;
 begin
-  Result := TPdfArray.Create;
+  Result := TPdfFileArray.Create;
   ReadCurrentChar;
   while (FStream.Position < FStream.Size) do
   begin
@@ -988,6 +500,12 @@ begin
 
           Result.Add(ReadHexadecimalString);
         end;
+      '[':
+        begin
+          Result.Add(ReadArray);
+
+          ReadCurrentChar;
+        end;
       '/':
         Result.Add(ReadNamedObject);
       'R':
@@ -1008,19 +526,19 @@ begin
   end;
 end;
 
-function TPdfFileReader.ReadDictionaryObject: TPdfDictionary;
+function TPdfFileReader.ReadDictionaryObject: TPdfFileDictionary;
 var
   Key, ValueText: AnsiString;
   IntValue, ObjectNumber, GenerationNumber: Integer;
   RealValue: Double;
   IsIntValue: Boolean;
-  SubDictionary: TPdfDictionary;
-  SubArray: TPdfArray;
+  SubDictionary: TPdfFileDictionary;
+  SubArray: TPdfFileArray;
 begin
   ReadCurrentChar;
   SkipWhiteSpaces;
 
-  Result := TPdfDictionary.Create;
+  Result := TPdfFileDictionary.Create;
 
   repeat
     if FCurrentChar = '>' then
@@ -1033,7 +551,7 @@ begin
     Key := ReadNamedObject;
     SkipWhiteSpaces;
     case FCurrentChar of
-      '0' .. '9':
+      '-', '+', '0' .. '9':
         begin
           ReadNumber(IntValue, RealValue, IsIntValue);
 
@@ -1123,7 +641,7 @@ begin
   Result := StrToInt(string(Number));
 end;
 
-function TPdfFileReader.ReadHexadecimalString: AnsiString;
+function TPdfFileReader.ReadHexadecimalString: string;
 var
   Hex: AnsiString;
   Bytes: TBytes;
@@ -1164,7 +682,7 @@ begin
   end
   else
     for Index := 0 to Length(Bytes) - 1 do
-      Result := Result + AnsiChar(Bytes[Index]);
+      Result := Result + string(AnsiChar(Bytes[Index]));
 
   ReadCurrentChar;
 end;
@@ -1283,7 +801,7 @@ begin
   SkipSingleSpace;
   Count := ReadInteger;
   HandleLineBreak;
-  FCrossReferenceTable := TPdfCrossReferenceTable.Create(Start);
+  FCrossReferenceTable := TPdfFileCrossReferenceTable.Create(Start);
   SetLength(FCrossReferenceTable.FCrossReferences, Count);
   for Index := 0 to Count - 1 do
   begin
@@ -1302,7 +820,7 @@ begin
       ReadCurrentChar;
     HandleLineBreak;
 
-    FCrossReferenceTable.FCrossReferences[Index] := TPdfCrossReferenceEntry.Create(ByteOffset, GenerationNumber, Keyword = 'n');
+    FCrossReferenceTable.FCrossReferences[Index] := TPdfFileCrossReferenceEntry.Create(ByteOffset, GenerationNumber, Keyword = 'n');
   end;
   SkipWhiteSpaces;
 end;
