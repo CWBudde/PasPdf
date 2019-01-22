@@ -91,15 +91,7 @@ type
 implementation
 
 uses
-  AnsiStrings;
-
-resourcestring
-  RStrInvalidFile = 'Invalid File';
-  RStrUnsupportedVersion = 'Unsupported version';
-  RStrNewlineCharacterExpected = 'newline character expected';
-  RStrNotImplemented = 'Not implemented';
-  RStrInvalidCharacter = 'Invalid character %s';
-  RStrSpaceExpected = 'Space expected';
+  AnsiStrings, PasPdfStrings;
 
 type
   TFileHeader = array [0..4] of AnsiChar;
@@ -235,7 +227,7 @@ begin
   end;
 
   if Number = '' then
-    raise Exception.Create('Number expected');
+    raise Exception.Create(RStrNumberExpected);
 
   Result := StrToInt(string(Number));
 end;
@@ -255,7 +247,7 @@ begin
   end;
 
   if Number = '' then
-    raise Exception.Create('Number expected');
+    raise Exception.Create(RStrNumberExpected);
 
   Result := StrToInt('$' + string(Number));
 end;

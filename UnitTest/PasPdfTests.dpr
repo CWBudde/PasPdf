@@ -9,7 +9,8 @@ uses
   DUnitTestRunner,
   TestsPasPdf in 'TestsPasPdf.pas',
   PasPdf in '..\Source\PasPdf.pas',
-  PasPdfFileElements in '..\Source\PasPdfFileElements.pas';
+  PasPdfFileElements in '..\Source\PasPdfFileElements.pas',
+  PasPdfStrings in '..\Source\PasPdfStrings.pas';
 
 {$R *.RES}
 
