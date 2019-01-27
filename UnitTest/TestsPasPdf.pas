@@ -37,30 +37,30 @@ end;
 
 procedure TestTPdfFile.TestLoadSimpleFile;
 begin
-  FPdfFile.LoadFromFile('Simple.pdf');
+  FPdfFile.LoadFromFile('..\Common\Simple.pdf');
 end;
 
 procedure TestTPdfFile.TestLoadLibreOffice;
 begin
-  FPdfFile.LoadFromFile('LibreOffice.pdf');
+  FPdfFile.LoadFromFile('..\Common\LibreOffice.pdf');
 end;
 
 procedure TestTPdfFile.TestLoadPDFA;
 begin
-  FPdfFile.LoadFromFile('PDFA.pdf');
+  FPdfFile.LoadFromFile('..\Common\PDFA.pdf');
 end;
 
 procedure TestTPdfFile.TestLoadTextString;
 begin
-  FPdfFile.LoadFromFile('TextString.pdf');
+  FPdfFile.LoadFromFile('..\Common\TextString.pdf');
 end;
 
 procedure TestTPdfFile.TestCanLoad;
 begin
-  CheckTrue(FPdfFile.CanLoad('Simple.pdf'));
-  CheckTrue(FPdfFile.CanLoad('LibreOffice.pdf'));
-  CheckTrue(FPdfFile.CanLoad('PDFA.pdf'));
-  CheckTrue(FPdfFile.CanLoad('TextString.pdf'));
+  CheckTrue(FPdfFile.CanLoad('..\Common\Simple.pdf'));
+  CheckTrue(FPdfFile.CanLoad('..\Common\LibreOffice.pdf'));
+  CheckTrue(FPdfFile.CanLoad('..\Common\PDFA.pdf'));
+  CheckTrue(FPdfFile.CanLoad('..\Common\TextString.pdf'));
 end;
 
 initialization
